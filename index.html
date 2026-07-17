@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMS PRO - Security Gateway</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0d0f1a;
+    --bg-secondary: #131520;
+    --bg-card: #181b2a;
+    --bg-card2: #1e2133;
+    --accent: #5b5ef4;
+    --accent-light: #7879f1;
+    --accent-glow: rgba(91,94,244,0.25);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.12);
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,0.15);
+    --orange: #f59e0b;
+    --cyan: #06b6d4;
+    --text-primary: #f0f2ff;
+    --text-secondary: #8b90b8;
+    --text-muted: #555a7a;
+    --border: rgba(255,255,255,0.07);
+    --sidebar-w: 260px;
+    --radius: 14px;
+  }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; }
+  .screen.active { display: flex; }
+
+  /* ════════════════════════════════
+     LOGIN SCREEN
+  ════════════════════════════════ */
+  #login-screen {
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(91,94,244,0.18) 0%, transparent 70%),
+                var(--bg-primary);
+  }
+
+  .login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 40px 36px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+
+  .login-icon-wrap {
+    width: 72px; height: 72px;
+    background: rgba(91,94,244,0.18);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px;
+    font-size: 28px;
+  }
+
+  .login-title { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .login-title span { color: var(--accent-light); }
+  .login-sub { color: var(--text-secondary); font-size: 15px; font-weight: 500; margin-bottom: 32px; }
+
+  .field-label {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    margin-top: 18px;
+    text-transform: uppercase;
+  }
+
+  .field-label:first-of-type { margin-top: 0; }
+
+  .login-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .login-input::placeholder { color: var(--text-muted); }
+  .login-input:focus { border-color: var(--accent); }
+
+  .forgot-link {
+    text-align: right;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .forgot-link:hover { color: var(--accent-light); }
+
+  .btn-auth {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: opacity .2s, transform .15s;
+    font-family: inherit;
+  }
+  .btn-auth:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-auth:active { transform: translateY(0); }
+
+  .login-footer { margin-top: 20px; font-size: 12px; color: var(--text-muted); }
+
+  .error-msg { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
+
+  /* ════════════════════════════════
+     APP LAYOUT
+  ════════════════════════════════ */
+  #app-screen {
+    min-height: 100vh;
+    flex-direction: row;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 100;
+    transition: transform .3s;
+  }
+
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 8px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text { font-size: 18px; font-weight: 700; flex: 1; }
+  .sidebar-close { cursor: pointer; color: var(--text-muted); font-size: 18px; }
+  .sidebar-close:hover { color: var(--text-primary); }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all .15s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+  .nav-item.active { background: var(--accent); color: #fff; }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 14px 14px 6px;
+  }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .user-info {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+
+  .user-avatar {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .user-name { font-size: 14px; font-weight: 600; }
+  .user-role { font-size: 11px; color: var(--text-muted); }
+
+  .btn-logout {
+    width: 100%;
+    padding: 11px;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px;
+    color: var(--red);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit;
+    transition: background .15s;
+  }
+  .btn-logout:hover { background: rgba(239,68,68,0.18); }
+
+  /* ─── MAIN CONTENT ─── */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 36px 40px;
+    min-height: 100vh;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ════════════════════════════════
+     DASHBOARD
+  ════════════════════════════════ */
+  .page-title { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .stat-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stat-value { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .stat-desc { font-size: 12px; color: var(--text-muted); }
+
+  .alert-card {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-left: 3px solid var(--red);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--red);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* ════════════════════════════════
+     ATTENDANCE
+  ════════════════════════════════ */
+  .status-hub {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .clock-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+
+  .clock-date { color: var(--accent-light); font-size: 14px; font-family: 'JetBrains Mono', monospace; }
+
+  .status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: right;
+    margin-bottom: 16px;
+  }
+
+  .status-badge.checked-in { color: var(--green); }
+
+  .btn-checkin {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit;
+    margin-bottom: 10px;
+    transition: opacity .2s;
+  }
+  .btn-checkin:hover { opacity: .88; }
+
+  .btn-checkout {
+    width: 100%;
+    padding: 16px;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 12px;
+    color: var(--red);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit;
+    transition: background .2s;
+  }
+  .btn-checkout:hover { background: rgba(239,68,68,0.2); }
+
+  .mini-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .mini-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    text-align: center;
+  }
+
+  .mini-stat-icon { font-size: 22px; margin-bottom: 12px; }
+  .mini-stat-value { font-size: 40px; font-weight: 700; margin-bottom: 6px; }
+  .mini-stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* Temporal Logs */
+  .logs-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .logs-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logs-title { font-size: 18px; font-weight: 700; }
+
+  .logs-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 6px;
+  }
+
+  .logs-table { width: 100%; border-collapse: collapse; }
+  .logs-table th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 12px 24px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logs-table td {
+    padding: 18px 24px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-weight: 500;
+  }
+
+  .logs-table tr:last-child td { border-bottom: none; }
+
+  .log-active { color: var(--accent-light); font-weight: 700; font-size: 12px; letter-spacing: .5px; }
+  .log-duration { color: var(--cyan); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .time-range { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+  /* ════════════════════════════════
+     LEAVE REQUESTS
+  ════════════════════════════════ */
+  .leave-form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .form-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-select { appearance: none; cursor: pointer; }
+  .form-textarea { resize: vertical; min-height: 90px; }
+  .form-select option { background: var(--bg-card); }
+
+  .btn-submit {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    transition: opacity .2s;
+    margin-top: 8px;
+  }
+  .btn-submit:hover { opacity: .88; }
+
+  .history-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .history-header { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .history-title { font-size: 18px; font-weight: 700; }
+
+  .history-table { width: 100%; border-collapse: collapse; }
+  .history-table th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 12px 24px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-table td {
+    padding: 18px 24px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-weight: 500;
+  }
+  .history-table tr:last-child td { border-bottom: none; }
+
+  .tag-vacation { color: var(--accent-light); font-weight: 700; font-size: 13px; text-transform: uppercase; }
+  .tag-sick { color: var(--orange); font-weight: 700; font-size: 13px; text-transform: uppercase; }
+  .tag-pending { color: var(--orange); font-weight: 700; font-size: 12px; }
+  .tag-approved { color: var(--green); font-weight: 700; font-size: 12px; }
+
+  /* ════════════════════════════════
+     MY PROFILE
+  ════════════════════════════════ */
+  .profile-page-title { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .profile-page-sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 28px; }
+
+  .profile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .profile-avatar-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  .profile-avatar {
+    width: 88px; height: 88px;
+    background: var(--accent);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+  }
+
+  .profile-badge {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    width: 28px; height: 28px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    border: 2px solid var(--bg-card);
+  }
+
+  .profile-name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+
+  .role-tag {
+    display: inline-block;
+    background: var(--green-bg);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+
+  .profile-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .profile-info-item {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .info-icon { font-size: 16px; color: var(--accent-light); flex-shrink: 0; }
+  .info-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+  .info-value { font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+  .security-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+
+  .security-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+  .cipher-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--accent-light);
+  }
+
+  /* ════════════════════════════════
+     REPORTS (Admin)
+  ════════════════════════════════ */
+  .report-filters {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex; gap: 12px; align-items: flex-end;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .report-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .report-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+
+  /* ════════════════════════════════
+     USERS (Admin)
+  ════════════════════════════════ */
+  .users-toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .search-input {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    width: 260px;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  .btn-add-user {
+    padding: 10px 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity .15s;
+  }
+  .btn-add-user:hover { opacity: .88; }
+
+  .users-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .users-table { width: 100%; border-collapse: collapse; }
+  .users-table th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .users-table td {
+    padding: 16px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .users-table tr:last-child td { border-bottom: none; }
+  .users-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .user-cell { display: flex; align-items: center; gap: 10px; }
+  .table-avatar {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .badge-employee {
+    background: rgba(91,94,244,0.15);
+    color: var(--accent-light);
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .badge-admin {
+    background: rgba(245,158,11,0.15);
+    color: var(--orange);
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  .btn-del {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 6px;
+    color: var(--red);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+  }
+  .btn-del:hover { background: rgba(239,68,68,0.2); }
+
+  /* ─── ADD USER MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.8);
+  }
+
+  .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+  .modal-close { float: right; cursor: pointer; color: var(--text-muted); font-size: 20px; margin-top: -4px; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+    align-items: center; gap: 10px;
+    animation: slideUp .3s ease;
+  }
+  .toast.show { display: flex; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── ADMIN-ONLY ITEMS ─── */
+  .admin-only { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen" class="screen active">
+  <div class="login-card">
+    <div class="login-icon-wrap">→]</div>
+    <div class="login-title">AMS <span>PRO</span></div>
+    <div class="login-sub">Security Gateway</div>
+
+    <div class="field-label">Organizational Email</div>
+    <input class="login-input" id="login-email" type="email" placeholder="name@organization.com">
+
+    <div class="field-label">Secure Cipher</div>
+    <input class="login-input" id="login-pass" type="password" placeholder="••••••••••••">
+
+    <div class="forgot-link">Forgot Protocol?</div>
+    <div class="error-msg" id="login-error">Invalid credentials. Try admin@org.com / admin or bash@gmail.com / bash</div>
+
+    <button class="btn-auth" onclick="doLogin()">
+      <span>→]</span> <span>Authenticate</span>
+    </button>
+    <div class="login-footer">Restricted Access. Personnel only.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP SCREEN
+══════════════════════════════════════ -->
+<div id="app-screen" class="screen">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⊞</div>
+      <div class="logo-text">AMS</div>
+      <div class="sidebar-close" onclick="toggleSidebar()">✕</div>
+    </div>
+
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="navigate('attendance')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Attendance
+    </div>
+    <div class="nav-item" onclick="navigate('leave')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Leave Requests
+    </div>
+    <div class="nav-item" onclick="navigate('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      My Profile
+    </div>
+
+    <div class="nav-section-label admin-only" id="admin-label">Admin Tools</div>
+    <div class="nav-item admin-only" id="nav-reports" onclick="navigate('reports')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Reports
+    </div>
+    <div class="nav-item admin-only" id="nav-users" onclick="navigate('users')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="user-avatar" id="sb-avatar">A</div>
+        <div>
+          <div class="user-name" id="sb-name">Admin</div>
+          <div class="user-role" id="sb-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">→] Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="dash-welcome">Welcome, Admin</div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(91,94,244,0.15);color:var(--accent-light);">👤</div>
+          <div>
+            <div class="stat-label">Total Employees</div>
+            <div class="stat-value" id="stat-total">3</div>
+            <div class="stat-desc">Active employee records</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(34,197,94,0.15);color:var(--green);">✔</div>
+          <div>
+            <div class="stat-label">Present Today</div>
+            <div class="stat-value" id="stat-present">—</div>
+            <div class="stat-desc">Staff currently checked-in</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(239,68,68,0.12);color:var(--red);">◔</div>
+          <div>
+            <div class="stat-label">Attendance Rate</div>
+            <div class="stat-value" id="stat-rate">—%</div>
+            <div class="stat-desc">Today's attendance percentage</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:var(--orange);">⏱</div>
+          <div>
+            <div class="stat-label">Late Today</div>
+            <div class="stat-value" id="stat-late">—</div>
+            <div class="stat-desc">Employees who were late</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-card" id="dash-alert" style="display:none;">
+        <span>↗</span>
+        <span>Critical Alert: Company attendance is below the 75% threshold.</span>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="page" id="page-attendance">
+      <div class="page-title">Attendance</div>
+      <div class="page-sub">Status Hub</div>
+
+      <div class="status-hub">
+        <div>
+          <div class="clock-display" id="live-clock">09:00:00</div>
+          <div class="clock-date" id="live-date">Saturday, 22 March 2026</div>
+        </div>
+        <div>
+          <div class="status-badge" id="checkin-status">NOT CHECKED IN</div>
+          <button class="btn-checkin" id="btn-ci" onclick="doCheckIn()">→] CHECK IN</button>
+          <button class="btn-checkout" id="btn-co" onclick="doCheckOut()">→] CHECK OUT</button>
+        </div>
+      </div>
+
+      <div class="mini-stat-grid">
+        <div class="mini-stat">
+          <div class="mini-stat-icon" style="color:var(--cyan);">⚡</div>
+          <div class="mini-stat-value" id="active-days">8</div>
+          <div class="mini-stat-label">Active Days</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-icon" style="color:var(--orange);">⏰</div>
+          <div class="mini-stat-value" id="tardy-events">5</div>
+          <div class="mini-stat-label">Tardy Events</div>
+        </div>
+      </div>
+
+      <div class="logs-card">
+        <div class="logs-header">
+          <div class="logs-title">Temporal Logs</div>
+          <div class="logs-badge">LATEST 30 CYCLES</div>
+        </div>
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>Calendar Date</th>
+              <th>Temporal Interval</th>
+              <th>Session Magnitude</th>
+              <th>Protocol Method</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody">
+            <tr>
+              <td>2026-02-14</td>
+              <td class="time-range">10:36 ↔ --:--</td>
+              <td><span class="log-active">ACTIVE LOG</span></td>
+              <td>Web Portal</td>
+            </tr>
+            <tr>
+              <td>2026-02-13</td>
+              <td class="time-range">00:41 ↔ --:--</td>
+              <td><span class="log-active">ACTIVE LOG</span></td>
+              <td>Web Portal</td>
+            </tr>
+            <tr>
+              <td>2026-02-12</td>
+              <td class="time-range">12:27 ↔ 12:30</td>
+              <td><span class="log-duration">0.05 HR</span></td>
+              <td>Web Portal</td>
+            </tr>
+            <tr>
+              <td>2026-02-12</td>
+              <td class="time-range">12:27 ↔ --:--</td>
+              <td><span class="log-active">ACTIVE LOG</span></td>
+              <td>Web Portal</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LEAVE REQUESTS -->
+    <div class="page" id="page-leave">
+      <div class="page-title">Leave Requests</div>
+      <div class="page-sub">Submit and track leave protocols</div>
+
+      <div class="leave-form-card">
+        <div class="form-title">New Request</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Classification</label>
+            <select class="form-select" id="leave-type">
+              <option>Vacation</option>
+              <option>Sick Leave</option>
+              <option>Personal</option>
+              <option>Emergency</option>
+            </select>
+          </div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Start Date</label>
+            <input class="form-input" type="date" id="leave-start">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Date</label>
+            <input class="form-input" type="date" id="leave-end">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rational</label>
+          <textarea class="form-textarea" id="leave-reason" placeholder="Describe the reason for leave..."></textarea>
+        </div>
+        <button class="btn-submit" onclick="submitLeave()">✈ SUBMIT REQUEST</button>
+      </div>
+
+      <div class="history-card">
+        <div class="history-header">
+          <div class="history-title">Protocol History</div>
+        </div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Classification</th>
+              <th>Temporal Interval</th>
+              <th>Rational</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="leave-tbody">
+            <tr>
+              <td><span class="tag-vacation">VACATION</span></td>
+              <td>2026-03-03 → 2026-04-04</td>
+              <td>i wont be around</td>
+              <td><span class="tag-pending">PENDING</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MY PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="profile-page-title">Identity Management</div>
+      <div class="profile-page-sub">Securely manage your professional credentials</div>
+
+      <div class="profile-card">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" id="prof-avatar">👤</div>
+          <div class="profile-badge">🛡</div>
+        </div>
+        <div class="profile-name" id="prof-name">bash</div>
+        <div class="role-tag" id="prof-role">Employee</div>
+
+        <div class="profile-info-grid">
+          <div class="profile-info-item">
+            <div class="info-icon">✉</div>
+            <div>
+              <div class="info-label">Active Email</div>
+              <div class="info-value" id="prof-email">bash@gmail.com</div>
+            </div>
+          </div>
+          <div class="profile-info-item">
+            <div class="info-icon">💼</div>
+            <div>
+              <div class="info-label">Department</div>
+              <div class="info-value" id="prof-dept">IT</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="security-card">
+        <div class="security-title">Security Protocol</div>
+
+        <div class="form-group">
+          <label class="form-label">Verification Name</label>
+          <input class="form-input" id="prof-username-input" value="bash">
+        </div>
+
+        <div class="cipher-title">🔑 Credential Update</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">New Cipher</label>
+            <input class="form-input" type="password" id="new-cipher" placeholder="Update cipher (optional)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Cipher</label>
+            <input class="form-input" type="password" id="confirm-cipher" placeholder="Repeat cipher">
+          </div>
+        </div>
+
+        <button class="btn-submit" onclick="updateProfile()">💾 Update Identity</button>
+      </div>
+    </div>
+
+    <!-- REPORTS (Admin) -->
+    <div class="page" id="page-reports">
+      <div class="page-title">Reports</div>
+      <div class="page-sub">Attendance analytics and insights</div>
+
+      <div class="report-filters">
+        <div class="form-group" style="margin:0;flex:1">
+          <label class="form-label">From</label>
+          <input class="form-input" type="date" value="2026-03-01">
+        </div>
+        <div class="form-group" style="margin:0;flex:1">
+          <label class="form-label">To</label>
+          <input class="form-input" type="date" value="2026-03-22">
+        </div>
+        <div class="form-group" style="margin:0;flex:1">
+          <label class="form-label">Department</label>
+          <select class="form-select"><option>All Departments</option><option>IT</option><option>HR</option><option>Finance</option></select>
+        </div>
+        <button class="btn-add-user">Generate</button>
+      </div>
+
+      <div class="report-stat-grid">
+        <div class="report-stat">
+          <div class="stat-label">Avg Attendance</div>
+          <div class="stat-value" style="font-size:28px">82%</div>
+          <div class="stat-desc">Company-wide average</div>
+        </div>
+        <div class="report-stat">
+          <div class="stat-label">Total Check-ins</div>
+          <div class="stat-value" style="font-size:28px">47</div>
+          <div class="stat-desc">This period</div>
+        </div>
+        <div class="report-stat">
+          <div class="stat-label">Late Arrivals</div>
+          <div class="stat-value" style="font-size:28px;color:var(--orange)">12</div>
+          <div class="stat-desc">Tardy events logged</div>
+        </div>
+      </div>
+
+      <div class="logs-card">
+        <div class="logs-header">
+          <div class="logs-title">Employee Summary</div>
+        </div>
+        <table class="logs-table">
+          <thead>
+            <tr><th>Employee</th><th>Department</th><th>Days Present</th><th>Tardy</th><th>Rate</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>bash</td><td>IT</td><td>8</td><td>5</td><td style="color:var(--orange)">62%</td></tr>
+            <tr><td>alice</td><td>HR</td><td>18</td><td>2</td><td style="color:var(--green)">90%</td></tr>
+            <tr><td>bob</td><td>Finance</td><td>15</td><td>3</td><td style="color:var(--cyan)">78%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USERS (Admin) -->
+    <div class="page" id="page-users">
+      <div class="page-title">Users</div>
+      <div class="page-sub">Identity management for all personnel</div>
+
+      <div class="users-toolbar">
+        <input class="search-input" placeholder="🔍  Search employees..." id="user-search" oninput="filterUsers()">
+        <button class="btn-add-user" onclick="openAddUser()">+ Add User</button>
+      </div>
+
+      <div class="users-table-wrap">
+        <table class="users-table">
+          <thead>
+            <tr><th>Employee</th><th>Email</th><th>Department</th><th>Role</th><th>Action</th></tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr data-name="admin">
+              <td><div class="user-cell"><div class="table-avatar">A</div><div><div>Admin</div><div style="font-size:12px;color:var(--text-muted)">admin@org.com</div></div></div></td>
+              <td>admin@org.com</td><td>Management</td>
+              <td><span class="badge-admin">Admin</span></td>
+              <td><button class="btn-del" onclick="deleteUser(this)">Remove</button></td>
+            </tr>
+            <tr data-name="bash">
+              <td><div class="user-cell"><div class="table-avatar">B</div><div><div>bash</div><div style="font-size:12px;color:var(--text-muted)">bash@gmail.com</div></div></div></td>
+              <td>bash@gmail.com</td><td>IT</td>
+              <td><span class="badge-employee">Employee</span></td>
+              <td><button class="btn-del" onclick="deleteUser(this)">Remove</button></td>
+            </tr>
+            <tr data-name="alice">
+              <td><div class="user-cell"><div class="table-avatar">AL</div><div><div>alice</div><div style="font-size:12px;color:var(--text-muted)">alice@org.com</div></div></div></td>
+              <td>alice@org.com</td><td>HR</td>
+              <td><span class="badge-employee">Employee</span></td>
+              <td><button class="btn-del" onclick="deleteUser(this)">Remove</button></td>
+            </tr>
+            <tr data-name="bob">
+              <td><div class="user-cell"><div class="table-avatar">BO</div><div><div>bob</div><div style="font-size:12px;color:var(--text-muted)">bob@org.com</div></div></div></td>
+              <td>bob@org.com</td><td>Finance</td>
+              <td><span class="badge-employee">Employee</span></td>
+              <td><button class="btn-del" onclick="deleteUser(this)">Remove</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal-box">
+    <div class="modal-title">Add New User <span class="modal-close" onclick="closeAddUser()">✕</span></div>
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" id="new-name" placeholder="Enter name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="new-email" placeholder="user@organization.com" type="email">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <select class="form-select" id="new-dept">
+          <option>IT</option><option>HR</option><option>Finance</option><option>Management</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-select" id="new-role-sel">
+          <option>Employee</option><option>Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Secure Cipher</label>
+      <input class="form-input" id="new-pass" type="password" placeholder="Set initial cipher">
+    </div>
+    <button class="btn-submit" onclick="addUser()">➕ Create User</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ──────────────────────────────────────
+// STATE
+// ──────────────────────────────────────
+const USERS_DB = [
+  { name: 'Admin',  email: 'admin@org.com',   pass: 'admin', role: 'Admin',    dept: 'Management' },
+  { name: 'bash',   email: 'bash@gmail.com',  pass: 'bash',  role: 'Employee', dept: 'IT'         },
+  { name: 'alice',  email: 'alice@org.com',   pass: 'alice', role: 'Employee', dept: 'HR'         },
+  { name: 'bob',    email: 'bob@org.com',     pass: 'bob',   role: 'Employee', dept: 'Finance'    },
+];
+
+let currentUser = null;
+let checkedIn = false;
+let checkInTime = null;
+
+// ──────────────────────────────────────
+// AUTH
+// ──────────────────────────────────────
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value.trim();
+  const err   = document.getElementById('login-error');
+
+  const user = USERS_DB.find(u => u.email === email && u.pass === pass);
+  if (!user) { err.style.display = 'block'; return; }
+
+  err.style.display = 'none';
+  currentUser = user;
+  initApp();
+}
+
+function doLogout() {
+  currentUser = null; checkedIn = false; checkInTime = null;
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-screen').classList.add('active');
+  document.getElementById('app-screen').classList.remove('active');
+}
+
+// ──────────────────────────────────────
+// INIT APP
+// ──────────────────────────────────────
+function initApp() {
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+
+  // Sidebar user info
+  document.getElementById('sb-avatar').textContent = currentUser.name[0].toUpperCase();
+  document.getElementById('sb-name').textContent = currentUser.name;
+  document.getElementById('sb-role').textContent = currentUser.role;
+
+  // Admin tools visibility
+  const isAdmin = currentUser.role === 'Admin';
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdmin ? 'flex' : 'none';
+  });
+  if (isAdmin) {
+    document.getElementById('admin-label').style.display = 'block';
+  }
+
+  // Dashboard
+  document.getElementById('dash-welcome').textContent = `Welcome, ${currentUser.name}`;
+  updateDashStats();
+
+  // Profile
+  document.getElementById('prof-name').textContent = currentUser.name;
+  document.getElementById('prof-role').textContent = currentUser.role;
+  document.getElementById('prof-email').textContent = currentUser.email;
+  document.getElementById('prof-dept').textContent = currentUser.dept;
+  document.getElementById('prof-avatar').textContent = currentUser.name[0].toUpperCase();
+  document.getElementById('prof-username-input').value = currentUser.name;
+
+  navigate('dashboard');
+  startClock();
+}
+
+// ──────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────
+function navigate(page) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+
+  const nav = document.querySelector(`.nav-item[onclick="navigate('${page}')"]`);
+  if (nav) nav.classList.add('active');
+  document.getElementById(`page-${page}`).classList.add('active');
+}
+
+// ──────────────────────────────────────
+// CLOCK
+// ──────────────────────────────────────
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const ss = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('live-clock').textContent = `${hh}:${mm}:${ss}`;
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('live-date').textContent =
+      `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ──────────────────────────────────────
+// ATTENDANCE
+// ──────────────────────────────────────
+function doCheckIn() {
+  if (checkedIn) { showToast('⚠ Already checked in!'); return; }
+  checkedIn = true;
+  checkInTime = new Date();
+  document.getElementById('checkin-status').textContent = 'CHECKED IN';
+  document.getElementById('checkin-status').classList.add('checked-in');
+  showToast('✅ Checked in successfully!');
+  addLog(checkInTime, null);
+  updateDashStats();
+}
+
+function doCheckOut() {
+  if (!checkedIn) { showToast('⚠ Not checked in yet!'); return; }
+  const outTime = new Date();
+  const dur = ((outTime - checkInTime) / 3600000).toFixed(2);
+  checkedIn = false;
+  document.getElementById('checkin-status').textContent = 'NOT CHECKED IN';
+  document.getElementById('checkin-status').classList.remove('checked-in');
+  showToast(`✅ Checked out. Duration: ${dur} HR`);
+  updateLog(checkInTime, outTime, dur);
+  updateDashStats();
+}
+
+function addLog(inTime, outTime) {
+  const tbody = document.getElementById('logs-tbody');
+  const row = tbody.insertRow(0);
+  const d = inTime;
+  const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const ts = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  row.innerHTML = `
+    <td>${ds}</td>
+    <td class="time-range">${ts} ↔ --:--</td>
+    <td><span class="log-active">ACTIVE LOG</span></td>
+    <td>Web Portal</td>`;
+  row.id = 'active-log-row';
+}
+
+function updateLog(inTime, outTime, dur) {
+  const row = document.getElementById('active-log-row');
+  if (!row) return;
+  const inTs = `${String(inTime.getHours()).padStart(2,'0')}:${String(inTime.getMinutes()).padStart(2,'0')}`;
+  const outTs = `${String(outTime.getHours()).padStart(2,'0')}:${String(outTime.getMinutes()).padStart(2,'0')}`;
+  row.cells[1].innerHTML = `<span class="time-range">${inTs} ↔ ${outTs}</span>`;
+  row.cells[2].innerHTML = `<span class="log-duration">${dur} HR</span>`;
+  row.removeAttribute('id');
+}
+
+function updateDashStats() {
+  const total = USERS_DB.filter(u => u.role === 'Employee').length;
+  document.getElementById('stat-total').textContent = total;
+  if (checkedIn) {
+    document.getElementById('stat-present').textContent = '1';
+    document.getElementById('stat-rate').textContent = Math.round((1/total)*100) + '%';
+    document.getElementById('stat-late').textContent = '0';
+    document.getElementById('dash-alert').style.display = 'none';
+  } else {
+    document.getElementById('stat-present').textContent = '0';
+    document.getElementById('stat-rate').textContent = '0%';
+    document.getElementById('stat-late').textContent = '0';
+    document.getElementById('dash-alert').style.display = total > 0 ? 'flex' : 'none';
+  }
+}
+
+// ──────────────────────────────────────
+// LEAVE
+// ──────────────────────────────────────
+function submitLeave() {
+  const type   = document.getElementById('leave-type').value;
+  const start  = document.getElementById('leave-start').value;
+  const end    = document.getElementById('leave-end').value;
+  const reason = document.getElementById('leave-reason').value.trim();
+
+  if (!start || !end || !reason) { showToast('⚠ Fill in all fields'); return; }
+
+  const tbody = document.getElementById('leave-tbody');
+  const row = tbody.insertRow(0);
+  const cls = type === 'Sick Leave' ? 'tag-sick' : 'tag-vacation';
+  row.innerHTML = `
+    <td><span class="${cls}">${type.toUpperCase()}</span></td>
+    <td>${start} → ${end}</td>
+    <td>${reason}</td>
+    <td><span class="tag-pending">PENDING</span></td>`;
+
+  document.getElementById('leave-reason').value = '';
+  document.getElementById('leave-start').value = '';
+  document.getElementById('leave-end').value = '';
+  showToast('✅ Leave request submitted!');
+}
+
+// ──────────────────────────────────────
+// PROFILE
+// ──────────────────────────────────────
+function updateProfile() {
+  const newName = document.getElementById('prof-username-input').value.trim();
+  const nc = document.getElementById('new-cipher').value;
+  const cc = document.getElementById('confirm-cipher').value;
+
+  if (nc && nc !== cc) { showToast('⚠ Ciphers do not match'); return; }
+  if (newName) {
+    currentUser.name = newName;
+    document.getElementById('prof-name').textContent = newName;
+    document.getElementById('sb-name').textContent = newName;
+    document.getElementById('sb-avatar').textContent = newName[0].toUpperCase();
+    document.getElementById('prof-avatar').textContent = newName[0].toUpperCase();
+  }
+  if (nc) currentUser.pass = nc;
+  document.getElementById('new-cipher').value = '';
+  document.getElementById('confirm-cipher').value = '';
+  showToast('✅ Identity updated!');
+}
+
+// ──────────────────────────────────────
+// USERS
+// ──────────────────────────────────────
+function openAddUser() { document.getElementById('add-user-modal').classList.add('open'); }
+function closeAddUser() { document.getElementById('add-user-modal').classList.remove('open'); }
+
+function addUser() {
+  const name = document.getElementById('new-name').value.trim();
+  const email = document.getElementById('new-email').value.trim();
+  const dept = document.getElementById('new-dept').value;
+  const role = document.getElementById('new-role-sel').value;
+  const pass = document.getElementById('new-pass').value;
+
+  if (!name || !email || !pass) { showToast('⚠ Fill in all fields'); return; }
+
+  USERS_DB.push({ name, email, pass, role, dept });
+
+  const tbody = document.getElementById('users-tbody');
+  const row = tbody.insertRow(0);
+  const av = name.substring(0,2).toUpperCase();
+  const badgeCls = role === 'Admin' ? 'badge-admin' : 'badge-employee';
+  row.setAttribute('data-name', name.toLowerCase());
+  row.innerHTML = `
+    <td><div class="user-cell"><div class="table-avatar">${av}</div><div><div>${name}</div><div style="font-size:12px;color:var(--text-muted)">${email}</div></div></div></td>
+    <td>${email}</td><td>${dept}</td>
+    <td><span class="${badgeCls}">${role}</span></td>
+    <td><button class="btn-del" onclick="deleteUser(this)">Remove</button></td>`;
+
+  updateDashStats();
+  closeAddUser();
+  showToast(`✅ User ${name} created!`);
+}
+
+function deleteUser(btn) {
+  const row = btn.closest('tr');
+  row.remove();
+  showToast('🗑 User removed');
+  updateDashStats();
+}
+
+function filterUsers() {
+  const q = document.getElementById('user-search').value.toLowerCase();
+  document.querySelectorAll('#users-tbody tr').forEach(row => {
+    row.style.display = row.getAttribute('data-name').includes(q) ? '' : 'none';
+  });
+}
+
+// ──────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ──────────────────────────────────────
+// ENTER KEY on login
+// ──────────────────────────────────────
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('login-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
