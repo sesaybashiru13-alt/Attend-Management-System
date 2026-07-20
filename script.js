@@ -71,6 +71,7 @@ function selectRole(btn) {
   }
 }
 
+
 /** Attempts login against the mock DB */
 function doLogin() {
   const email = document.getElementById("login-email").value.trim();
@@ -78,6 +79,7 @@ function doLogin() {
   const err   = document.getElementById("login-error");
 
   // Look up user record
+     // Look up user record
   const user = DB.users[email];
   if (!user || user.password !== pass) {
     err.classList.add("show");
