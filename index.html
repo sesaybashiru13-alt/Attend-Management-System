@@ -46,68 +46,6 @@
   /* ════════════════════════════════
      LOGIN SCREEN
   ════════════════════════════════ */
- <!-- LOGIN VIEW CONTAINER -->
-<section id="loginView" class="view-container active">
-  <div class="login-card">
-    <div class="brand-header">
-      <div class="logo-icon">🛡️</div>
-      <h1>AMS PRO</h1>
-      <p class="subtitle">Security Gateway & Attendance System</p>
-    </div>
-
-    <form id="loginForm" class="login-form">
-      <!-- Email Field -->
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <div class="input-wrapper">
-          <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            placeholder="admin@ams.com" 
-            required 
-            autocomplete="username"
-          />
-        </div>
-      </div>
-
-      <!-- Password Field -->
-      <div class="form-group">
-        <label for="password">Password</label>
-        <div class="input-wrapper">
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            placeholder="••••••••" 
-            required 
-            autocomplete="current-password"
-          />
-        </div>
-      </div>
-
-      <!-- Error / Alert Message Box -->
-      <div id="loginError" class="error-message" style="display: none;"></div>
-
-      <!-- Submit Button -->
-      <button type="submit" class="btn-primary">
-        <span>Sign In</span>
-        <svg class="icon-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
-      </button>
-    </form>
-
-    <!-- Quick Role Hints (Optional helper for development) -->
-    <div class="login-hints">
-      <p><strong>Demo Access:</strong></p>
-      <ul>
-        <li>Admin: <code>admin@ams.com</code> / <code>admin123</code></li>
-        <li>Employee: <code>bash@ams.com</code> / <code>bash123</code></li>
-      </ul>
-    </div>
-  </div>
-</section>
 
   /* ════════════════════════════════
      APP LAYOUT
@@ -361,8 +299,7 @@
     gap: 16px;
     margin-bottom: 24px;
   }
-
-  .mini-stat {
+    .mini-stat {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -661,7 +598,7 @@
     font-family: inherit;
     font-size: 14px;
     outline: none;
-    width: 260px;
+        width: 260px;
   }
   .search-input:focus { border-color: var(--accent); }
 
@@ -961,7 +898,7 @@
           <div class="logs-title">Temporal Logs</div>
           <div class="logs-badge">LATEST 30 CYCLES</div>
         </div>
-        <table class="logs-table">
+                <table class="logs-table">
           <thead>
             <tr>
               <th>Calendar Date</th>
@@ -1303,12 +1240,10 @@ function initApp() {
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
 
-  // Sidebar user info
   document.getElementById('sb-avatar').textContent = currentUser.name[0].toUpperCase();
   document.getElementById('sb-name').textContent = currentUser.name;
   document.getElementById('sb-role').textContent = currentUser.role;
 
-  // Admin tools visibility
   const isAdmin = currentUser.role === 'Admin';
   document.querySelectorAll('.admin-only').forEach(el => {
     el.style.display = isAdmin ? 'flex' : 'none';
@@ -1317,11 +1252,9 @@ function initApp() {
     document.getElementById('admin-label').style.display = 'block';
   }
 
-  // Dashboard
   document.getElementById('dash-welcome').textContent = `Welcome, ${currentUser.name}`;
   updateDashStats();
 
-  // Profile
   document.getElementById('prof-name').textContent = currentUser.name;
   document.getElementById('prof-role').textContent = currentUser.role;
   document.getElementById('prof-email').textContent = currentUser.email;
